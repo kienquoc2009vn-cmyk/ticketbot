@@ -31,7 +31,7 @@ const fs = require("fs");
 const BUY_CATEGORY_ID = "1476828190013132843";
 const SUPPORT_CATEGORY_ID = "1476828755589595256";
 const STAFF_ROLE_ID = "1476541949619212289";
-const LOG_CHANNEL_ID = "PUT_LOG_CHANNEL_ID_HERE";
+const LOG_CHANNEL_ID = "1478005407027826860";
 
 const EMBED_IMAGE =
 "https://i.pinimg.com/originals/2f/10/ce/2f10ce69b96c0611989308b0abc68e70.gif";
@@ -167,7 +167,7 @@ client.on("interactionCreate", async interaction => {
           ]
         },
         {
-          id:STAFF_ROLE_ID,
+          id:1476541949619212289,
           allow:[
             PermissionsBitField.Flags.ViewChannel,
             PermissionsBitField.Flags.SendMessages
@@ -180,7 +180,7 @@ client.on("interactionCreate", async interaction => {
 
     const embed = new EmbedBuilder()
       .setTitle("🎫 Ticket đã mở")
-      .setDescription(`Xin chào ${user}`)
+      .setDescription(`Xin chào ${user} bạn muốn mua rank nào thì chon list ở phía dưới nha!`)
       .setColor("#FFC0CB")
       .setImage(EMBED_IMAGE);
 
@@ -206,9 +206,12 @@ client.on("interactionCreate", async interaction => {
           .setCustomId("buy_menu")
           .setPlaceholder("Chọn rank")
           .addOptions([
-            {label:"VIP",value:"VIP"},
-            {label:"MVP",value:"MVP"},
-            {label:"LEGEND",value:"LEGEND"}
+            {label:"Pro",value:"Pro"},
+            {label:"Vip",value:"Vip"},
+            {label:"Vip+",value:"Vip+"},
+            {label:"Mvp",value:"Mvp"},
+            {label:"Mvp+",value:"Mvp+"},
+            {label:"Legend",value:"Legend"}
           ])
       );
 
@@ -226,7 +229,7 @@ client.on("interactionCreate", async interaction => {
   if (interaction.isStringSelectMenu()) {
     if (interaction.customId === "buy_menu") {
       await interaction.reply({
-        content:`✅ Bạn chọn **${interaction.values[0]}**`,
+        content:`✅ Bạn chọn **${interaction.values[0]}** ${client.staff.tag}`,
       });
     }
   }
