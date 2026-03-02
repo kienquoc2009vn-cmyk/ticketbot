@@ -1,16 +1,29 @@
 {
   "name": "ticketbot",
   "version": "1.0.0",
-  "description": "",
+  "description": "Discord Ticket Bot 24/7 - Support & Buy Rank",
   "main": "index.js",
+  "type": "commonjs",
+
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "node --watch index.js"
   },
-  "keywords": [],
-  "author": "",
+
+  "keywords": [
+    "discord",
+    "discord-bot",
+    "ticket",
+    "support-bot"
+  ],
+
+  "author": "QuocLe",
   "license": "ISC",
-  "type": "commonjs",
+
+  "engines": {
+    "node": ">=18"
+  },
+
   "dependencies": {
     "discord.js": "^14.25.1",
     "dotenv": "^17.3.1"
