@@ -1,4 +1,15 @@
 require("dotenv").config();
+const http = require("http");
+
+/* ================= KEEP ALIVE (RENDER) ================= */
+
+const PORT = process.env.PORT || 3000;
+http.createServer((req, res) => {
+  res.write("Bot running");
+  res.end();
+}).listen(PORT);
+
+/* ================= IMPORT ================= */
 
 const {
   Client,
@@ -10,6 +21,7 @@ const {
   ChannelType,
   PermissionsBitField,
   StringSelectMenuBuilder,
+  SlashCommandBuilder,
 } = require("discord.js");
 
 const fs = require("fs");
@@ -19,6 +31,7 @@ const fs = require("fs");
 const BUY_CATEGORY_ID = "1476828190013132843";
 const SUPPORT_CATEGORY_ID = "1476828755589595256";
 const STAFF_ROLE_ID = "1476541949619212289";
+const LOG_CHANNEL_ID = "PUT_LOG_CHANNEL_ID_HERE";
 
 const EMBED_IMAGE =
 "https://i.pinimg.com/originals/2f/10/ce/2f10ce69b96c0611989308b0abc68e70.gif";
@@ -37,7 +50,7 @@ function nextTicket() {
   return String(data.count).padStart(4, "0");
 }
 
-/* ================= BOT ================= */
+/* ================= CLIENT ================= */
 
 const client = new Client({
   intents: [
@@ -47,128 +60,127 @@ const client = new Client({
   ],
 });
 
-client.once("clientReady", () => {
-  console.log(`✅ Bot online: ${client.user.tag}`);
+/* ================= READY ================= */
+
+client.once("clientReady", async () => {
+  console.log(`✅ ${client.user.tag} online`);
+
+  // register slash command
+  await client.application.commands.set([
+    new SlashCommandBuilder()
+      .setName("panel")
+      .setDescription("Gửi panel tạo ticket"),
+  ]);
 });
 
-/* ================= PANEL ================= */
+/* ================= PANEL FUNCTION ================= */
 
-client.on("messageCreate", async (message) => {
-  if (message.author.bot) return;
+async function sendPanel(channel) {
+
+  const embed = new EmbedBuilder()
+    .setTitle("🎫 Trung tâm hỗ trợ")
+    .setDescription(`
+🛒 Mua Rank  
+🆘 Hỗ trợ server  
+
+Nhấn nút bên dưới để mở ticket.
+`)
+    .setColor("#FFC0CB")
+    .setImage(EMBED_IMAGE);
+
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("buy_ticket")
+      .setLabel("Mua Rank")
+      .setStyle(ButtonStyle.Success),
+
+    new ButtonBuilder()
+      .setCustomId("support_ticket")
+      .setLabel("Hỗ Trợ")
+      .setStyle(ButtonStyle.Primary)
+  );
+
+  channel.send({ embeds:[embed], components:[row] });
+}
+
+/* ================= SLASH COMMAND ================= */
+
+client.on("interactionCreate", async interaction => {
 
   /* PANEL */
-  if (message.content === "!panel") {
-
-    const embed = new EmbedBuilder()
-     .setTitle("🎫 Trung tâm hỗ trợ")
-     .setDescription(`
-🛒 Tạo ticket này để **Mua Rank**
-
-🆘 Tạo ticket này để được **Hỗ trợ** từ @Staff
-
-➡️ Nhấn nút bên dưới để tạo ticket.
-`)
-  .setColor("#FFC0CB")
-  .setImage(EMBED_IMAGE);
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId("buy_ticket")
-        .setLabel("Mua Rank")
-        .setStyle(ButtonStyle.Success),
-
-      new ButtonBuilder()
-        .setCustomId("support_ticket")
-        .setLabel("Hỗ Trợ")
-        .setStyle(ButtonStyle.Primary)
-    );
-
-    message.channel.send({ embeds: [embed], components: [row] });
+  if (interaction.isChatInputCommand()) {
+    if (interaction.commandName === "panel") {
+      await sendPanel(interaction.channel);
+      return interaction.reply({
+        content:"✅ Panel đã gửi!",
+        ephemeral:true
+      });
+    }
   }
-
-  /* CLOSE COMMAND */
-  if (message.content.startsWith("!close")) {
-
-    const args = message.content.split(" ");
-    const ticketName = args.slice(1).join(" ").replace("#","");
-
-    if (!ticketName)
-      return message.reply("❌ Dùng: `!close #ticket-0001`");
-
-    const channel = message.guild.channels.cache.find(
-      c => c.name === ticketName
-    );
-
-    if (!channel)
-      return message.reply("❌ Không tìm thấy ticket.");
-
-    const isStaff =
-      message.member.roles.cache.has(1476541949619212289);
-
-    const isOwner =
-      message.guild.ownerId === message.author.id;
-
-    if (!isStaff && !isOwner)
-      return message.reply("❌ Chỉ staff hoặc owner!");
-
-    message.reply("🔒 Đang đóng ticket...");
-
-    setTimeout(() => {
-      channel.delete().catch(console.error);
-    }, 3000);
-  }
-});
-
-/* ================= INTERACTION ================= */
-
-client.on("interactionCreate", async (interaction) => {
 
   /* CREATE TICKET */
-  if (interaction.isButton()) {
-
-    if (!["buy_ticket","support_ticket"].includes(interaction.customId))
-      return;
-
-    await interaction.deferReply({ ephemeral: true });
+  if (interaction.isButton() &&
+      ["buy_ticket","support_ticket"].includes(interaction.customId)) {
 
     const guild = interaction.guild;
     const user = interaction.user;
+
+    const type =
+      interaction.customId === "buy_ticket"
+        ? "buy"
+        : "support";
+
+    /* ===== ANTI DUPLICATE ===== */
+
+    const existing = guild.channels.cache.find(
+      c => c.name.includes(`${type}-`) &&
+      c.permissionOverwrites.cache.has(user.id)
+    );
+
+    if (existing)
+      return interaction.reply({
+        content:`❌ Bạn đã có ticket: ${existing}`,
+        ephemeral:true
+      });
+
+    await interaction.deferReply({ephemeral:true});
+
     const number = nextTicket();
 
-    const isBuy = interaction.customId === "buy_ticket";
-
-    const category = isBuy
-      ? BUY_CATEGORY_ID
-      : SUPPORT_CATEGORY_ID;
-
     const channel = await guild.channels.create({
-      name: `${isBuy ? "buy":"support"}-${number}`,
-      type: ChannelType.GuildText,
-      parent: category,
-      permissionOverwrites: [
+      name:`${type}-${user.username}-${number}`,
+      type:ChannelType.GuildText,
+      parent:type==="buy"
+        ? BUY_CATEGORY_ID
+        : SUPPORT_CATEGORY_ID,
+
+      permissionOverwrites:[
         {
-          id: guild.roles.everyone,
-          deny: [PermissionsBitField.Flags.ViewChannel],
+          id:guild.roles.everyone.id,
+          deny:[PermissionsBitField.Flags.ViewChannel]
         },
         {
-          id: user.id,
-          allow: [
+          id:user.id,
+          allow:[
             PermissionsBitField.Flags.ViewChannel,
-            PermissionsBitField.Flags.SendMessages,
-          ],
+            PermissionsBitField.Flags.SendMessages
+          ]
         },
         {
-          id: STAFF_ROLE_ID,
-          allow: [
+          id:STAFF_ROLE_ID,
+          allow:[
             PermissionsBitField.Flags.ViewChannel,
-            PermissionsBitField.Flags.SendMessages,
-          ],
-        },
-      ],
+            PermissionsBitField.Flags.SendMessages
+          ]
+        }
+      ]
     });
 
+    /* MESSAGE */
+
     const embed = new EmbedBuilder()
-      .setTitle("🎫 Ticket đã tạo")
-      .setDescription(`Xin chào ${user}, @Staff sẽ hỗ trợ bạn.`)
+      .setTitle("🎫 Ticket đã mở")
+      .setDescription(`Xin chào ${user}`)
       .setColor("#FFC0CB")
       .setImage(EMBED_IMAGE);
 
@@ -180,28 +192,29 @@ client.on("interactionCreate", async (interaction) => {
     );
 
     await channel.send({
-      content: `${user}`,
-      embeds: [embed],
-      components: [closeBtn],
+      content:`${user}`,
+      embeds:[embed],
+      components:[closeBtn]
     });
 
     /* BUY MENU */
-    if (isBuy) {
+
+    if (type === "buy") {
 
       const menu = new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()
           .setCustomId("buy_menu")
-          .setPlaceholder("Bạn muốn mua rank gì?")
+          .setPlaceholder("Chọn rank")
           .addOptions([
-            { label:"VIP Rank", value:"VIP"},
-            { label:"MVP Rank", value:"MVP"},
-            { label:"Legend Rank", value:"LEGEND"},
+            {label:"VIP",value:"VIP"},
+            {label:"MVP",value:"MVP"},
+            {label:"LEGEND",value:"LEGEND"}
           ])
       );
 
       channel.send({
-        content:"🛒 Chọn rank bạn muốn mua:",
-        components:[menu],
+        content:"🛒 Bạn muốn mua gì?",
+        components:[menu]
       });
     }
 
@@ -209,6 +222,7 @@ client.on("interactionCreate", async (interaction) => {
   }
 
   /* SELECT MENU */
+
   if (interaction.isStringSelectMenu()) {
     if (interaction.customId === "buy_menu") {
       await interaction.reply({
@@ -218,28 +232,46 @@ client.on("interactionCreate", async (interaction) => {
   }
 
   /* CLOSE BUTTON */
+
   if (interaction.isButton() &&
       interaction.customId === "close_ticket") {
 
     const isStaff =
-      interaction.member.roles.cache.has(1476541949619212289);
+      interaction.member.roles.cache.has(STAFF_ROLE_ID);
 
     const isOwner =
       interaction.guild.ownerId === interaction.user.id;
 
     if (!isStaff && !isOwner)
       return interaction.reply({
-        content:"❌ Chỉ staff/owner!",
-        ephemeral:true,
+        content:"❌ Không đủ quyền!",
+        ephemeral:true
       });
 
-    await interaction.reply({
-      content:"🔒 Đang đóng ticket...",
-    });
+    await interaction.reply("🔒 Đang đóng ticket...");
+
+    /* TRANSCRIPT */
+
+    const messages = await interaction.channel.messages.fetch({limit:100});
+    const transcript = messages
+      .map(m => `${m.author.tag}: ${m.content}`)
+      .reverse()
+      .join("\n");
+
+    fs.writeFileSync("transcript.txt", transcript);
+
+    const logChannel =
+      interaction.guild.channels.cache.get(LOG_CHANNEL_ID);
+
+    if (logChannel)
+      logChannel.send({
+        content:`📁 Transcript ${interaction.channel.name}`,
+        files:["transcript.txt"]
+      });
 
     setTimeout(() => {
-      interaction.channel.delete().catch(console.error);
-    }, 3000);
+      interaction.channel.delete().catch(()=>{});
+    },3000);
   }
 });
 
