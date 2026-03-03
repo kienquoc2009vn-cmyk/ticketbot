@@ -211,7 +211,7 @@ client.on("interactionCreate", async interaction => {
   if (interaction.isStringSelectMenu()) {
     if (interaction.customId === "buy_menu") {
       await interaction.reply({
-        content:`<@&${STAFF_ROLE_ID}> Bạn {user_name} muốn mua rank ${interaction.values[0]}`,
+        content:`<@&${STAFF_ROLE_ID}> Bạn ${interaction.user} muốn mua rank ${interaction.values[0]}`,
       });
     }
   }
