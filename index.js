@@ -1,7 +1,24 @@
 require("dotenv").config();
-const http = require("http");
 
-/* ================= KEEP ALIVE (RENDER) ================= */
+client.once("ready", async () => {
+  console.log(`✅ ${client.user.tag} online`);
+});
+const {
+  Client,
+  GatewayIntentBits,
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ChannelType,
+  PermissionsBitField,
+  StringSelectMenuBuilder,
+  SlashCommandBuilder,
+} = require("discord.js");
+
+const fs = require("fs");
+
+/* ===== KEEP ALIVE RENDER ===== */
 
 const PORT = process.env.PORT || 3000;
 http.createServer((req, res) => {
@@ -229,7 +246,7 @@ client.on("interactionCreate", async interaction => {
   if (interaction.isStringSelectMenu()) {
     if (interaction.customId === "buy_menu") {
       await interaction.reply({
-        content:`✅ Bạn chọn **${interaction.values[0]}** ${client.staff.tag}`,
+        content:`✅ Bạn chọn **${interaction.values[0]}**`,
       });
     }
   }
@@ -240,7 +257,7 @@ client.on("interactionCreate", async interaction => {
       interaction.customId === "close_ticket") {
 
     const isStaff =
-      interaction.member.roles.cache.has(STAFF_ROLE_ID);
+      interaction.member.roles.cache.has(1476541949619212289);
 
     const isOwner =
       interaction.guild.ownerId === interaction.user.id;
@@ -279,5 +296,5 @@ client.on("interactionCreate", async interaction => {
 });
 
 /* ================= LOGIN ================= */
-
+console.log("TOKEN:", process.env.TOKEN ? "OK" : "MISSING");
 client.login(process.env.TOKEN);
