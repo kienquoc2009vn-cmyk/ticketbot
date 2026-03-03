@@ -63,7 +63,7 @@ const client = new Client({
 /* ================= READY ================= */
 
 client.once("ready", async () => {
-  console.log(`✅ ${client.user.tag} online`);
+  console.log(`${client.user.tag} online`);
 
   await client.application.commands.set([
     new SlashCommandBuilder()
@@ -211,7 +211,7 @@ client.on("interactionCreate", async interaction => {
   if (interaction.isStringSelectMenu()) {
     if (interaction.customId === "buy_menu") {
       await interaction.reply({
-        content:`✅ Bạn chọn **${interaction.values[0]}**\n <@&${1476541949619212289}> Bạn {user_name} muốn mua rank ${interaction.values[0]}`,
+        content:`<@&${STAFF_ROLE_ID}> Bạn {user_name} muốn mua rank ${interaction.values[0]}`,
       });
     }
   }
