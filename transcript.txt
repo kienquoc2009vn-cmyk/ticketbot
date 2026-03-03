@@ -1,4 +1,4 @@
 Frozen Support#0226: <@1390398499157315716>
 Frozen Support#0226: 🛒 Bạn muốn mua gì?
-Frozen Support#0226: <@&1476541949619212289> Bạn {user_name} muốn mua rank Pro
+Frozen Support#0226: <@&1476541949619212289> Bạn <@1390398499157315716> muốn mua rank Pro
 Frozen Support#0226: 🔒 Đang đóng ticket...

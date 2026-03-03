@@ -164,7 +164,7 @@ client.on("interactionCreate", async interaction => {
     });
 
     const embed = new EmbedBuilder()
-      .setTitle("🎫 Ticket đã được tạo bởi ${interaction.user}")
+      .setTitle("🎫 Ticket đã được tạo bởi {user}")
       .setDescription(`Xin chào ${user} dưới đây là list **rank** của máy Server`)
       .setColor("#FFC0CB")
       .setImage(EMBED_IMAGE);
