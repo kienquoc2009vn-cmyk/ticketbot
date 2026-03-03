@@ -297,4 +297,6 @@ client.on("interactionCreate", async interaction => {
 
 /* ================= LOGIN ================= */
 console.log("TOKEN:", process.env.TOKEN ? "OK" : "MISSING");
-client.login(process.env.TOKEN);
+client.login(process.env.TOKEN)
+  .then(() => console.log("LOGIN SUCCESS"))
+  .catch(err => console.error("LOGIN ERROR:", err));
