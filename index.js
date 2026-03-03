@@ -164,8 +164,8 @@ client.on("interactionCreate", async interaction => {
     });
 
     const embed = new EmbedBuilder()
-      .setTitle("🎫 Ticket đã mở")
-      .setDescription(`Xin chào ${user}`)
+      .setTitle("🎫 Ticket đã được tạo bởi ${interaction.user}")
+      .setDescription(`Xin chào ${user} dưới đây là list **rank** của máy Server`)
       .setColor("#FFC0CB")
       .setImage(EMBED_IMAGE);
 
@@ -177,7 +177,7 @@ client.on("interactionCreate", async interaction => {
     );
 
     await channel.send({
-      content:`${user}`,
+      content:`Bạn đợi một lúc nha <@&${STAFF_ROLE_ID}> sẽ hỗ trợ bạn trong thời gian tới`,
       embeds:[embed],
       components:[closeBtn]
     });
@@ -211,7 +211,7 @@ client.on("interactionCreate", async interaction => {
   if (interaction.isStringSelectMenu()) {
     if (interaction.customId === "buy_menu") {
       await interaction.reply({
-        content:`<@&${STAFF_ROLE_ID}> Bạn ${interaction.user} muốn mua rank ${interaction.values[0]}`,
+        content:`<@&${STAFF_ROLE_ID}> Bạn ${interaction.user} muốn mua rank **${interaction.values[0]}**`,
       });
     }
   }
@@ -228,7 +228,7 @@ client.on("interactionCreate", async interaction => {
 
     if (!isStaff && !isOwner)
       return interaction.reply({
-        content:"❌ Không đủ quyền!",
+        content:"❌ Không có quyền đóng!",
         ephemeral:true
       });
 
